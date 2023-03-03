@@ -5,58 +5,70 @@ import java.io.*;
 import java.net.*;
 
 
+
 public class ClientUDP {
-
-
-    public static void main(String[] args) throws IOException{
-        
-      /*  
-        DatagramSocket client = new DatagramSocket();
-        InetAddress hostname = InetAddress.getByName("localhost");
-        
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
-        String messaggio = in.readLine();
-        byte[] buf = messaggio.getBytes();
-        
-        DatagramPacket p = new DatagramPacket(buf, buf.length, hostname, 8080);
-        
-        client.send(p);
-        
-       */ 
-        
-        
-        
-        int porta = 8080;
-        InetAddress IPServer = InetAddress.getByName("localhost");
-        byte[] bufferIN = new byte[1024];
-        byte[] bufferOUT = new byte[1024];
-        boolean connesso = true;
-        
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
-        DatagramSocket clientSocket = new DatagramSocket();
-        System.out.println("Client pronto ad inviare il messaggio....");
-        
-        
-        while(connesso){
+    
+      
+    public void comunica(){
+        try {
+            int porta = 8080;
+            InetAddress serverIP = InetAddress.getByName("localhost");
+            byte[] bufferIN = new byte[1024];
+            byte[] bufferOUT = new byte[1024];
+            boolean attivo = true;
             
-            String daSpedire = in.readLine();
-            bufferOUT = daSpedire.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket (bufferOUT, bufferOUT.length , IPServer, porta);
-            clientSocket.send(sendPacket);
             
-            if(daSpedire.equals("fine")){
-                connesso = false;
-                System.out.println("Connessione terminata....");
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            
+            DatagramSocket clientSocket = new DatagramSocket();
+            System.out.println("[1]. Client pronto ad inviare i messaggi : ");
+            
+            DatagramPacket receivePacket = new DatagramPacket(bufferIN, 0, bufferIN.length);            
+            
+            while(attivo == true){
+                
+                //permette di inviare messaggi al server 
+                String daSpedire = in.readLine();
+                bufferOUT = daSpedire.getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(bufferOUT, 0,bufferOUT.length,serverIP,porta);
+                clientSocket.send(sendPacket);
+                
+                
+                //serve per far intercettare i messaggi del server 
+                clientSocket.receive(receivePacket);
+                int numChar = receivePacket.getLength();
+                String ricevuto = new String(receivePacket.getData());
+                ricevuto = ricevuto.substring(0,numChar);
+                System.out.println("Risposta del server : " + ricevuto.toUpperCase());
+                
+                
+                if(daSpedire.equals("fine")){
+                    attivo = false;
+                    System.out.println("Richeista di finire la connessione");
+                }
+                
+
+                
             }
-
+            
+            clientSocket.close();
+            
+            
+        } catch (UnknownHostException err) {
+            System.err.println("Errore DNS");
+        } catch (SocketException ex) {
+            System.err.println("Erroro nell'istanziamento del socket");
+        } catch (IOException ex) {
+            System.err.println("Erroro ");
         }
+    }
+
+
+    public static void main(String[] args) {
         
-        DatagramPacket receivePacket = new DatagramPacket(bufferIN, bufferIN.length);
-        clientSocket.receive(receivePacket);
-        String ricevuto = new String(receivePacket.getData());
-        
+        ClientUDP client = new ClientUDP();
+        client.comunica();
+
     }
     
 }
